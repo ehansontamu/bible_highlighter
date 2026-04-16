@@ -1,69 +1,98 @@
 # Real-Time Bible Verse Highlighter
 
-This repository is being built in stages.
+This project is a local-first Bible retrieval and visualization app built in stages. It now includes:
 
-Current stage: offline prototype
+- an offline CLI prototype for typed testing
+- a local web UI for typed input, microphone input, and uploaded audio files
+- chapter-level heatmap visualization across the full Protestant canon
+- local-only model execution with no external API calls
 
-Pipeline:
+## Current Behavior
 
-1. Typed input
-2. Local GGUF LLM keyword extraction via `llama-cpp-python`
-3. Embedding lookup via `sentence-transformers`
-4. Cosine similarity search over Bible verses
-5. Print top verse matches
+The live web app does not display isolated verse hits anymore. It digests input into larger thought windows, then applies relevance as chapter heat across the whole Bible.
 
-The repository now also includes a local web UI for typed input and browser microphone capture.
+- typed input updates after a short pause
+- microphone input is transcribed locally with `faster-whisper`
+- uploaded audio files are transcribed server-side, chunked into digest windows, and synchronized to playback
+- chapter boxes are shown in canonical order and glow red by relevance
+
+Default web behavior:
+
+- `60` second digest windows
+- early flush on long pauses
+- chapter-level heatmap rendering
+- CPU-safe defaults with `--gpu-layers 0`
 
 ## Local Bible Data
 
-The repository now supports a full local Bible workflow without distributing the text in git.
+The repo supports a full local Bible workflow without distributing the text in git.
 
 1. Place the source text file at the repo root as `ESV Bible 2001.txt`
 2. Convert it into local JSON:
 
 ```bash
-python scripts/build_local_bible_json.py
+python3 scripts/build_local_bible_json.py
 ```
 
-3. Optionally precompute embeddings:
+3. Optionally precompute embeddings for faster startup and search:
 
 ```bash
-PYTHONPATH=src python scripts/prepare_bible_embeddings.py
+PYTHONPATH=src python3 scripts/prepare_bible_embeddings.py
 ```
 
-The generated JSON is written to `data/local/esv_bible_2001.json` and is gitignored.
+Generated local assets:
 
-## Run the prototype
+- `data/local/esv_bible_2001.json`
+- local embeddings stored in that JSON
 
-Install dependencies:
+Both `data/local/` and `models/` are gitignored.
+
+## Local Models
+
+The app expects local model assets. Current default local paths are:
+
+- embeddings: `models/embeddings/all-MiniLM-L6-v2`
+- GGUF LLM: `models/llm/qwen2.5-1.5b-instruct-gguf/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf`
+- STT: `models/stt/faster-whisper-base.en`
+
+Requirements:
+
+- the LLM must be llama.cpp-compatible GGUF
+- embeddings must be available locally or already cached
+- no hosted APIs are used
+
+## Install
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Run:
+## Run The CLI Prototype
+
+The CLI is still useful for testing the retrieval pipeline without audio or UI.
+
+One-shot query:
 
 ```bash
-PYTHONPATH=src python -m rt_bible_highlighter.cli --llm-model /path/to/model.gguf
+PYTHONPATH=src .venv/bin/python -m rt_bible_highlighter.cli \
+  --llm-model models/llm/qwen2.5-1.5b-instruct-gguf/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf \
+  --text "I am anxious and need peace"
+```
+
+Interactive mode:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m rt_bible_highlighter.cli \
+  --llm-model models/llm/qwen2.5-1.5b-instruct-gguf/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf
 ```
 
 If `data/local/esv_bible_2001.json` exists, the CLI uses it automatically. Otherwise it falls back to `data/sample_bible.json`.
 
-One-shot test without entering the prompt loop:
+## Run The Web UI
 
-```bash
-PYTHONPATH=src python -m rt_bible_highlighter.cli --llm-model /path/to/model.gguf --text "I am anxious and need peace"
-```
-
-Optional embedding precompute step:
-
-```bash
-PYTHONPATH=src python scripts/prepare_bible_embeddings.py --input data/sample_bible.json
-```
-
-## Run the Web UI
-
-The root launcher is:
+Launch from the repo root:
 
 ```bash
 .venv/bin/python run_web_ui.py
@@ -75,20 +104,10 @@ Then open:
 http://127.0.0.1:8000
 ```
 
-Notes:
-
-- The page now loads first and warms models in the background.
-- First startup can take a few minutes while the local embedding, GGUF, and Whisper models initialize.
-- Typed input updates after a short pause while typing.
-- Browser microphone audio is captured in the page and transcribed locally by the server with `faster-whisper`.
+The page loads first and warms models in the background. First startup can take a few minutes.
 
 ## Notes
 
-- The LLM must be a local llama.cpp-compatible GGUF model.
-- The embedding model is loaded in local-only mode. Use a local path or a model name that is already present in the local Hugging Face cache.
-- Leave `--gpu-layers 0` for CPU-safe execution. Increase it on NVIDIA systems when your `llama-cpp-python` build supports GPU offload.
-- `data/sample_bible.json` remains as a lightweight fallback for fast testing, but the app now prefers the full local Bible JSON when present.
-- Default local model locations now used by the app:
-  - `models/embeddings/all-MiniLM-L6-v2`
-  - `models/llm/qwen2.5-1.5b-instruct-gguf/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf`
-  - `models/stt/faster-whisper-tiny.en`
+- This repo currently prefers CPU/RAM execution.
+- `models/`, `data/local/`, and `ESV Bible 2001.txt` are local-only and not meant for distribution.
+- `data/sample_bible.json` remains as a lightweight fallback for fast testing.
