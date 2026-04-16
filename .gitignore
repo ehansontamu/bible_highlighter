@@ -1,0 +1,6 @@
+ESV Bible 2001.txt
+data/local/
+models/
+.venv/
+venv/
+__pycache__/

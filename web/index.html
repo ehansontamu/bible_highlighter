@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Real-Time Bible Verse Highlighter</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="screen">
+      <aside class="sidebar">
+        <section class="hero compact-panel">
+          <p class="eyebrow">Local Web UI</p>
+          <h1>Real-Time Bible Verse Highlighter</h1>
+          <p id="startupStatus" class="startup-status">Starting local models...</p>
+        </section>
+
+        <section class="compact-panel controls">
+          <label for="typedInput">Type</label>
+          <textarea id="typedInput" rows="4" placeholder="Type a prayer, sermon line, or theme..."></textarea>
+          <div class="mic-actions">
+            <button id="micToggle" type="button">Start Mic</button>
+            <button id="micReset" type="button" class="secondary">Reset</button>
+          </div>
+          <p id="micStatus" class="hint">Idle.</p>
+          <label for="audioFileInput" class="upload-label">Audio File</label>
+          <input id="audioFileInput" type="file" accept="audio/*">
+          <audio id="audioPlayer" controls preload="metadata"></audio>
+          <p id="fileStatus" class="hint">No file loaded.</p>
+        </section>
+
+        <section class="compact-panel">
+          <h2>Transcript</h2>
+          <p id="transcriptText" class="transcript">Waiting for input...</p>
+        </section>
+
+        <section class="compact-panel">
+          <h2>Keywords</h2>
+          <div id="keywordChips" class="chips"></div>
+        </section>
+
+        <section class="compact-panel">
+          <div class="verse-header">
+            <h2>Window</h2>
+            <p id="resultMeta" class="hint">No results yet.</p>
+          </div>
+          <p id="windowStatus" class="hint">Audio is digested in 60-second windows, or earlier after long pauses, and applied as chapter heat.</p>
+        </section>
+      </aside>
+
+      <section class="wall-stage">
+        <div class="wall-header">
+          <div>
+            <p class="eyebrow">Canonical Order</p>
+            <h2>Chapter Constellation</h2>
+          </div>
+          <p id="wallMeta" class="hint">Loading chapter map...</p>
+        </div>
+        <div class="visual-stage">
+          <div id="chapterWall" class="chapter-wall"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>
